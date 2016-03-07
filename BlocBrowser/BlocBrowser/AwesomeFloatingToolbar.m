@@ -73,7 +73,7 @@
         NSUInteger currentLabelIndex = [self.labels indexOfObject:thisLabel];
         
         CGFloat labelHeight = CGRectGetHeight(self.bounds)/2;
-        CGFloat labelWidth = CGRectGetHeight(self.bounds)/2;
+        CGFloat labelWidth = CGRectGetWidth(self.bounds)/2;
         CGFloat labelX = 0;
         CGFloat labelY = 0;
         
@@ -94,7 +94,7 @@
         }
         else{
             //1 or 3, so on the right
-            labelX = CGRectGetHeight(self.bounds)/2;
+            labelX = CGRectGetWidth(self.bounds)/2;
         }
         thisLabel.frame = CGRectMake(labelX, labelY, labelWidth, labelHeight);
     }
