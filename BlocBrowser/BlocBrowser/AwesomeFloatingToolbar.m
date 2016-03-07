@@ -14,7 +14,8 @@
 @property (nonatomic, strong) NSArray *colors;
 @property (nonatomic, strong) NSArray *labels;
 @property (nonatomic, weak) UILabel *currentLabel;
-
+@property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
+@property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
 @end
 
 @implementation AwesomeFloatingToolbar
@@ -56,6 +57,12 @@
         }
     }
     
+    //#1
+    self.tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapFired:)];
+    [self addGestureRecognizer:self.tapGesture];
+    self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panFired:)];
+    [self addGestureRecognizer:self.panGesture];
+    //#2
     return self;
 }
 
@@ -66,7 +73,7 @@
         NSUInteger currentLabelIndex = [self.labels indexOfObject:thisLabel];
         
         CGFloat labelHeight = CGRectGetHeight(self.bounds)/2;
-        CGFloat labelWidth = CGRectGetHeight(self.bounds)/2;
+        CGFloat labelWidth = CGRectGetWidth(self.bounds)/2;
         CGFloat labelX = 0;
         CGFloat labelY = 0;
         
@@ -87,7 +94,7 @@
         }
         else{
             //1 or 3, so on the right
-            labelX = CGRectGetHeight(self.bounds)/2;
+            labelX = CGRectGetWidth(self.bounds)/2;
         }
         thisLabel.frame = CGRectMake(labelX, labelY, labelWidth, labelHeight);
     }
@@ -108,41 +115,31 @@
     }
 }
 
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
-    
-    self.currentLabel = label;
-    self.currentLabel.alpha = 0.5;
-}
-
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
-    if (self.currentLabel != label) {
-        self.currentLabel.alpha = 1;
-    }
-    else{
-        self.currentLabel.alpha = 0.5;
-    }
-}
-
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-    UILabel *label = [self labelFromTouches:touches withEvent:event];
-    
-    if (self.currentLabel == label) {
-        NSLog(@"Label tapped: %@", self.currentLabel.text);
+-(void) tapFired:(UITapGestureRecognizer* )recognizer{
+    if (recognizer.state == UIGestureRecognizerStateRecognized) {//#3
+        CGPoint location = [recognizer locationInView:self]; //#4
+        UIView *tappedView = [self hitTest:location withEvent:nil]; //#5
         
-        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didSelectButtonWithTitle:)]) {
-            [self.delegate floatingToolbar:self didSelectButtonWithTitle:self.currentLabel.text];
+        if ([self.labels containsObject:tappedView]) { //#6
+            if ([self.delegate respondsToSelector:@selector(floatingToolbar:didSelectButtonWithTitle:)]) {
+                [self.delegate floatingToolbar:self didSelectButtonWithTitle:((UILabel *)tappedView).text];
+            }
         }
     }
-    
-    self.currentLabel.alpha = 1;
-    self.currentLabel = nil;
 }
 
-- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-    self.currentLabel.alpha = 1;
-    self.currentLabel = nil;
+-(void) panFired: (UIPanGestureRecognizer *)recognizer{
+    if (recognizer.state == UIGestureRecognizerStateChanged) {
+        CGPoint translation = [recognizer translationInView:self];
+        
+        NSLog(@"New translation: %@", NSStringFromCGPoint(translation));
+        
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToPanWithOffset:)]) {
+            [self.delegate floatingToolbar:self didTryToPanWithOffset:translation];
+        }
+        
+        [recognizer setTranslation:CGPointZero inView:self];
+    }
 }
 
 #pragma mark - Button Enabling
