@@ -16,6 +16,9 @@
 @property (nonatomic, weak) UILabel *currentLabel;
 @property (nonatomic, strong) UITapGestureRecognizer *tapGesture;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGesture;
+@property (nonatomic, strong) UIPinchGestureRecognizer *pinchGesture;
+@property (nonatomic, strong) UILongPressGestureRecognizer *pressGesture;
+@property int longPressCount;
 @end
 
 @implementation AwesomeFloatingToolbar
@@ -63,7 +66,24 @@
     self.panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panFired:)];
     [self addGestureRecognizer:self.panGesture];
     //#2
+    self.pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(pinchFired:)];
+    [self addGestureRecognizer:self.pinchGesture];
+    self.pressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(pressFired:)];
+    [self addGestureRecognizer:self.pressGesture];
+    self.longPressCount = 0;
     return self;
+}
+
+-(void) rotateColors{
+    NSLog(@"called rotate colors");
+    for(UILabel *label in self.labels) {
+        NSUInteger currentLabelIndex = [self.labels indexOfObject:label];
+        NSUInteger nextLabelIndex = currentLabelIndex + 1;
+        if(nextLabelIndex > 3){
+            nextLabelIndex = 0;
+        }
+        label.backgroundColor = [self.colors objectAtIndex:nextLabelIndex];
+    }
 }
 
 - (void) layoutSubviews{
@@ -139,6 +159,30 @@
         }
         
         [recognizer setTranslation:CGPointZero inView:self];
+    }
+}
+
+-(void) pinchFired:(UIPinchGestureRecognizer *)recognizer{
+    if(recognizer.state == UIGestureRecognizerStateChanged){
+        CGFloat scale = recognizer.scale;
+        NSLog(@"New scale: %f", scale );
+        
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToPinchWithScale:)]) {
+            [self.delegate floatingToolbar:self didTryToPinchWithScale:scale];
+        }
+        [recognizer setScale:1];
+    }
+}
+
+-(void) pressFired:(UILongPressGestureRecognizer *)recognizer{
+    if (recognizer.state == UIGestureRecognizerStateChanged) {
+        CFTimeInterval minPressDuration = recognizer.minimumPressDuration = .5;
+        recognizer.numberOfTapsRequired = 1;
+        NSLog(@"Press duration: %d", self.longPressCount);
+        self.longPressCount++;
+        if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToPressWithMinDuration:)]) {
+            [self.delegate floatingToolbar:self didTryToPressWithMinDuration:minPressDuration];
+        }
     }
 }
 

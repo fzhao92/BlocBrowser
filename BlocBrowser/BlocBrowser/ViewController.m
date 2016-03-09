@@ -204,4 +204,15 @@
     
 }
 
+-(void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToPinchWithScale:(CGFloat)scale{
+    CGPoint startingPoint = toolbar.frame.origin;
+    CGRect potentialNewFrame = CGRectMake(startingPoint.x, startingPoint.y, CGRectGetWidth(toolbar.frame)*scale, CGRectGetHeight(toolbar.frame)*scale);
+    if(CGRectContainsRect(self.view.frame, potentialNewFrame)){
+        toolbar.frame = potentialNewFrame;
+    }
+}
+
+-(void) floatingToolbar:(AwesomeFloatingToolbar *)toolbar didTryToPressWithMinDuration:(CFTimeInterval)minDuration{
+    [toolbar rotateColors];
+}
 @end
