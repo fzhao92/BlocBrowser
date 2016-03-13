@@ -74,16 +74,20 @@
     return self;
 }
 
+static NSInteger colorOffset = 1;
 -(void) rotateColors{
     NSLog(@"called rotate colors");
     for(UILabel *label in self.labels) {
         NSUInteger currentLabelIndex = [self.labels indexOfObject:label];
-        NSUInteger nextLabelIndex = currentLabelIndex + 1;
+        NSUInteger nextLabelIndex = currentLabelIndex + colorOffset;
         if(nextLabelIndex > 3){
-            nextLabelIndex = 0;
+            nextLabelIndex = nextLabelIndex % 4;
         }
         label.backgroundColor = [self.colors objectAtIndex:nextLabelIndex];
+        NSLog(@"Label %@ color = %@",label.text,label.backgroundColor);
     }
+    
+    colorOffset++;
 }
 
 - (void) layoutSubviews{
@@ -108,12 +112,12 @@
             labelY = CGRectGetHeight(self.bounds)/2;
         }
         
-        if(currentLabelIndex %2 == 0){
-            //0 or 2, so on the left
+        if(currentLabelIndex == 0 || currentLabelIndex == 3){
+            //0 or 3, so on the left
             labelX = 0;
         }
         else{
-            //1 or 3, so on the right
+            //1 or 2, so on the right
             labelX = CGRectGetWidth(self.bounds)/2;
         }
         thisLabel.frame = CGRectMake(labelX, labelY, labelWidth, labelHeight);
@@ -175,9 +179,9 @@
 }
 
 -(void) pressFired:(UILongPressGestureRecognizer *)recognizer{
-    if (recognizer.state == UIGestureRecognizerStateChanged) {
+    if (recognizer.state == UIGestureRecognizerStateBegan) {
         CFTimeInterval minPressDuration = recognizer.minimumPressDuration = .5;
-        recognizer.numberOfTapsRequired = 1;
+  //      recognizer.numberOfTapsRequired = 1;
         NSLog(@"Press duration: %d", self.longPressCount);
         self.longPressCount++;
         if ([self.delegate respondsToSelector:@selector(floatingToolbar:didTryToPressWithMinDuration:)]) {
